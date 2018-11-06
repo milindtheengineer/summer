@@ -1,6 +1,7 @@
 package messaging
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -11,6 +12,29 @@ import (
 type Telegram struct {
 	QueryURL string
 	Token    string
+}
+
+// IncomingMessage is the struct that comes from Telegram
+type IncomingMessage struct {
+	UpdateID int `json:"update_id"`
+	Message  struct {
+		MessageID int `json:"message_id"`
+		From      struct {
+			ID           int    `json:"id"`
+			IsBot        bool   `json:"is_bot"`
+			FirstName    string `json:"first_name"`
+			LastName     string `json:"last_name"`
+			LanguageCode string `json:"language_code"`
+		} `json:"from"`
+		Chat struct {
+			ID        int    `json:"id"`
+			FirstName string `json:"first_name"`
+			LastName  string `json:"last_name"`
+			Type      string `json:"type"`
+		} `json:"chat"`
+		Date int    `json:"date"`
+		Text string `json:"text"`
+	} `json:"message"`
 }
 
 // SendMessage will send the message to the user
@@ -42,6 +66,10 @@ func (t *Telegram) SendMessage(message string, userID string) {
 }
 
 // ProcessMessage will process the json and return the message and chatID
-func (t *Telegram) ProcessMessage(message string) {
-	// Yet to write
+func (t *Telegram) ProcessMessage(message []byte) (string, int) {
+	incomingMessage := IncomingMessage{}
+	if err := json.Unmarshal(message, &incomingMessage); err != nil {
+		panic(err)
+	}
+	return incomingMessage.Message.Text, incomingMessage.Message.Chat.ID
 }
